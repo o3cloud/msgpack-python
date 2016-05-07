@@ -8,6 +8,7 @@ from cpython.bytes cimport (
 )
 from cpython.buffer cimport (
     Py_buffer,
+    PyObject_CheckBuffer,
     PyBuffer_Release,
     PyObject_GetBuffer,
     PyBUF_SIMPLE,
@@ -129,12 +130,20 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef Py_ssize_t off = 0
     cdef int ret
 
-    cdef char* buf
+    cdef Py_buffer view
+    cdef char* buf = NULL
     cdef Py_ssize_t buf_len
     cdef char* cenc = NULL
     cdef char* cerr = NULL
+    cdef char buffer_supported = 0
 
-    PyObject_AsReadBuffer(packed, <const void**>&buf, &buf_len)
+    if PyObject_CheckBuffer(packed):
+        buffer_supported = 1
+        if PyObject_GetBuffer(packed, &view, PyBUF_SIMPLE) == 0:
+            buf = <char*> view.buf
+            buf_len = view.len
+    else:
+        PyObject_AsReadBuffer(packed, <const void**>&buf, &buf_len)
 
     if encoding is not None:
         if isinstance(encoding, unicode):
@@ -150,6 +159,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
              use_list, cenc, cerr,
              max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
     ret = unpack_construct(&ctx, buf, buf_len, &off)
+    if buffer_supported:
+        PyBuffer_Release(&view);
     if ret == 1:
         obj = unpack_data(&ctx)
         if off < buf_len:
