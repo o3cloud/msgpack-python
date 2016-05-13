@@ -3,6 +3,7 @@
 import sys
 import array
 import struct
+import warnings
 
 if sys.version_info[0] == 3:
     PY3 = True
@@ -247,9 +248,17 @@ class Unpacker(object):
 
     def feed(self, next_bytes):
         assert self._fb_feeding
-        if isinstance(next_bytes, array.array):
-            next_bytes = next_bytes.tostring()
-        view = memoryview(next_bytes)
+        try:
+            view = memoryview(next_bytes)
+        except TypeError:
+            # try to use legacy buffer protocol if 2.7, otherwise re-raise
+            if not PY3:
+                view = memoryview(buffer(next_bytes))
+                warnings.warn("unpacking %s requires old buffer protocol,"
+                              "which will be removed in msgpack 1.0" % type(next_bytes),
+                              DeprecationWarning)
+            else:
+                raise
         assert view.itemsize == 1
         L = len(view)
         if self._fb_buf_n + L - self._fb_sloppiness > self._max_buffer_size:

@@ -15,6 +15,7 @@ from cpython.buffer cimport (
 )
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cpython.object cimport PyCallable_Check
+from cpython.exc cimport PyErr_WarnEx
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
@@ -142,8 +143,14 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if PyObject_GetBuffer(packed, &view, PyBUF_SIMPLE) == 0:
             buf = <char*> view.buf
             buf_len = view.len
+        else:
+            raise
     else:
         PyObject_AsReadBuffer(packed, <const void**>&buf, &buf_len)
+        PyErr_WarnEx(DeprecationWarning,
+                     "unpacking %s requires old buffer protocol,"
+                     "which will be removed in msgpack 1.0" % type(packed),
+                     1)
 
     if encoding is not None:
         if isinstance(encoding, unicode):
