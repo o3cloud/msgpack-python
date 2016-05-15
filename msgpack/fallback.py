@@ -254,8 +254,8 @@ class Unpacker(object):
             # try to use legacy buffer protocol if 2.7, otherwise re-raise
             if not PY3:
                 view = memoryview(buffer(next_bytes))
-                warnings.warn("unpacking %s requires old buffer protocol,"
-                              "which will be removed in msgpack 1.0" % type(next_bytes),
+                warnings.warn("Unpacking %s requires old buffer protocol, "
+                              "which will be removed in msgpack 1.0." % type(next_bytes),
                               DeprecationWarning)
             else:
                 raise

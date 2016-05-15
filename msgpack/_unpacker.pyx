@@ -149,8 +149,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     else:
         PyObject_AsReadBuffer(packed, <const void**>&buf, &buf_len)
         PyErr_WarnEx(DeprecationWarning,
-                     "unpacking %s requires old buffer protocol,"
-                     "which will be removed in msgpack 1.0" % type(packed),
+                     "Unpacking %s requires old buffer protocol, "
+                     "which will be removed in msgpack 1.0." % type(packed),
                      1)
 
     if encoding is not None:
