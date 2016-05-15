@@ -259,7 +259,8 @@ class Unpacker(object):
                               DeprecationWarning)
             else:
                 raise
-        assert view.itemsize == 1
+        if view.itemsize != 1:
+            raise ValueError("cannot unpack from multi-byte object")
         L = len(view)
         if self._fb_buf_n + L - self._fb_sloppiness > self._max_buffer_size:
             raise BufferFull

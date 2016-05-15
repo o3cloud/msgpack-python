@@ -141,10 +141,11 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     if PyObject_CheckBuffer(packed):
         buffer_supported = 1
         if PyObject_GetBuffer(packed, &view, PyBUF_SIMPLE) == 0:
-            buf = <char*> view.buf
+            if view.itemsize != 1:
+                PyBuffer_Release(&view)
+                raise ValueError("cannot unpack from multi-byte object")
             buf_len = view.len
-        else:
-            raise
+            buf = <char*> view.buf
     else:
         PyObject_AsReadBuffer(packed, <const void**>&buf, &buf_len)
         PyErr_WarnEx(DeprecationWarning,
